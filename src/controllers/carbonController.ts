@@ -29,7 +29,7 @@ export class CarbonController {
         // If no factor available, estimate based on category
         const categoryFactors = (getAllCarbonFactors() as any)[category.toLowerCase()];
         if (categoryFactors && Object.keys(categoryFactors).length > 0) {
-          const defaultFactor = Object.values(categoryFactors)[0].factor;
+          const defaultFactor = (Object.values(categoryFactors)[0] as any).factor;
           carbonEmission = amount * defaultFactor;
         }
       }
@@ -145,10 +145,10 @@ export class CarbonController {
       });
 
       const summary = {
-        totalEmission: records.reduce((sum, record) => sum + record.carbonEmission, 0),
+        totalEmission: records.reduce((sum: number, record: any) => sum + record.carbonEmission, 0),
         recordsCount: records.length,
         averageDailyEmission: records.length > 0 
-          ? records.reduce((sum, record) => sum + record.carbonEmission, 0) / records.length 
+          ? records.reduce((sum: number, record: any) => sum + record.carbonEmission, 0) / records.length 
           : 0,
         byCategory: {} as any,
         byType: {} as any,
@@ -156,7 +156,7 @@ export class CarbonController {
       };
 
       // Group by category
-      records.forEach(record => {
+      records.forEach((record: any) => {
         if (!summary.byCategory[record.category]) {
           summary.byCategory[record.category] = 0;
         }
@@ -164,7 +164,7 @@ export class CarbonController {
       });
 
       // Group by type
-      records.forEach(record => {
+      records.forEach((record: any) => {
         if (!summary.byType[record.type]) {
           summary.byType[record.type] = 0;
         }
@@ -183,7 +183,7 @@ export class CarbonController {
         
         summary.trend.push({
           date: dayStart.toISOString().split('T')[0],
-          emission: dayRecords.reduce((sum, record) => sum + record.carbonEmission, 0)
+          emission: dayRecords.reduce((sum: number, record: any) => sum + record.carbonEmission, 0)
         });
       }
 

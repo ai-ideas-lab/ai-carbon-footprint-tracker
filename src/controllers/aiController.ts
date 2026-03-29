@@ -6,12 +6,14 @@ import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 
 export class AIController {
-  private openai: OpenAI;
+  private static openai: OpenAI;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    if (!AIController.openai) {
+      AIController.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+    }
   }
 
   // Analyze a carbon record with AI
@@ -163,8 +165,8 @@ export class AIController {
       }
 
       // Calculate summary statistics
-      const totalEmission = records.reduce((sum, record) => sum + record.carbonEmission, 0);
-      const byCategory = records.reduce((acc, record) => {
+      const totalEmission = records.reduce((sum: number, record: any) => sum + record.carbonEmission, 0);
+      const byCategory = records.reduce((acc: Record<string, number>, record: any) => {
         acc[record.category] = (acc[record.category] || 0) + record.carbonEmission;
         return acc;
       }, {} as Record<string, number>);
@@ -177,7 +179,7 @@ export class AIController {
 - 记录数量：${records.length} 条
 - 各类别分布：
 ${Object.entries(byCategory).map(([category, emission]) => 
-  `- ${category}: ${emission.toFixed(2)} kg CO2e (${((emission / totalEmission) * 100).toFixed(1)}%)`
+  `- ${category}: ${(emission as number).toFixed(2)} kg CO2e (${((emission as number) / totalEmission) * 100).toFixed(1)}%)`
 ).join('\n')}
 
 **要求：**
@@ -407,7 +409,7 @@ ${Object.entries(byCategory).map(([category, emission]) =>
       }
 
       // Generate insights using AI
-      const totalEmission = records.reduce((sum, record) => sum + record.carbonEmission, 0);
+      const totalEmission = records.reduce((sum: number, record: any) => sum + record.carbonEmission, 0);
       const avgDailyEmission = totalEmission / records.length;
       
       const insightsPrompt = `
@@ -419,7 +421,7 @@ ${Object.entries(byCategory).map(([category, emission]) =>
 - 平均每日排放：${avgDailyEmission.toFixed(2)} kg CO2e
 
 **按类别分布：**
-${records.reduce((acc, record) => {
+${records.reduce((acc: Record<string, number>, record: any) => {
   acc[record.category] = (acc[record.category] || 0) + 1;
   return acc;
 }, {} as Record<string, number>)});
