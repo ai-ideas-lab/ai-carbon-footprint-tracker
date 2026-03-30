@@ -69,6 +69,7 @@ export const carbonValidationSchemas = {
 export const aiValidationSchemas = {
   analyzeRecord: Joi.object({
     recordData: Joi.object({
+      id: Joi.string().required(),
       category: Joi.string().required(),
       type: Joi.string().required(),
       amount: Joi.number().positive().required(),

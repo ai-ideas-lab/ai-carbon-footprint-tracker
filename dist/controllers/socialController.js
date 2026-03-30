@@ -43,7 +43,7 @@ class SocialController {
             const groups = await database_1.prisma.socialGroup.findMany({
                 where: {
                     OR: [
-                        { isPublic: false },
+                        { isPrivate: false },
                         {
                             members: {
                                 some: {
@@ -206,7 +206,7 @@ class SocialController {
             });
             if (groupMembers?.members) {
                 await database_1.prisma.userChallenge.createMany({
-                    data: groupMembers.members.map(member => ({
+                    data: groupMembers.members.map((member) => ({
                         userId: member.id,
                         challengeId: challenge.id,
                         progress: 0
@@ -264,7 +264,7 @@ class SocialController {
                         }
                     }
                 },
-                orderBy: { createdAt: 'desc' }
+                orderBy: { startDate: 'desc' }
             });
             res.json({
                 success: true,
@@ -303,12 +303,16 @@ class SocialController {
             });
             // Check if challenge is completed
             if (progress >= 100) {
+                // Get challenge details
+                const challenge = await database_1.prisma.groupChallenge.findUnique({
+                    where: { id: userChallenge.challengeId }
+                });
                 // Create achievement
                 await database_1.prisma.achievement.create({
                     data: {
                         userId: req.user.id,
                         title: '挑战完成',
-                        description: `完成了碳减排挑战: ${userChallenge.challenge.title}`,
+                        description: `完成了碳减排挑战: ${challenge?.title || '未知挑战'}`,
                         icon: '🏆',
                         points: 100
                     }
@@ -368,7 +372,7 @@ class SocialController {
                 const achievements = await database_1.prisma.achievement.findMany({
                     where: {
                         userId: member.id,
-                        createdAt: { gte: startDate }
+                        unlockedAt: { gte: startDate }
                     }
                 });
                 const carbonRecords = await database_1.prisma.carbonRecord.findMany({
@@ -446,7 +450,7 @@ class SocialController {
                 }),
                 database_1.prisma.achievement.count({
                     where: {
-                        createdAt: {
+                        unlockedAt: {
                             gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
                         }
                     }
@@ -483,7 +487,7 @@ class SocialController {
             }
         });
         const totalEmission = records.reduce((sum, record) => sum + record.carbonEmission, 0);
-        const reductions = records.filter(record => record.type === 'OFFSET' ||
+        const reductions = records.filter((record) => record.type === 'OFFSET' ||
             (record.category === 'ENERGY' || record.category === 'TRANSPORTATION')).length;
         return {
             totalEmissions: totalEmission,

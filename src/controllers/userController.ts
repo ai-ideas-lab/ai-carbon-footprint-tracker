@@ -1,6 +1,16 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+
+// Add type declaration to avoid version conflicts
+declare module 'jsonwebtoken' {
+  function sign(
+    payload: any,
+    secretOrPrivateKey: string,
+    options?: any
+  ): string;
+}
+
 import { prisma } from '../utils/database';
 import { userValidationSchemas } from '../middleware/validation';
 import { AuthRequest } from '../middleware/auth';
@@ -46,7 +56,7 @@ export class UserController {
       await prisma.userPreference.create({
         data: {
           userId: user.id,
-          preferredCategories: [],
+          preferredCategories: '[]', // JSON string for SQLite
           notificationsEnabled: true,
           language: 'zh-CN',
           currency: 'CNY'
@@ -60,7 +70,7 @@ export class UserController {
           email: user.email, 
           name: user.name 
         },
-        process.env.JWT_SECRET!,
+        process.env.JWT_SECRET || 'fallback-secret' as any,
         { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
       );
 
@@ -114,7 +124,7 @@ export class UserController {
           email: user.email, 
           name: user.name 
         },
-        process.env.JWT_SECRET!,
+        process.env.JWT_SECRET || 'fallback-secret' as any,
         { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
       );
 
@@ -212,18 +222,27 @@ export class UserController {
 
       // Update preferences if provided
       if (preferences) {
-        await prisma.userPreference.upsert({
-          where: { userId: req.user!.id },
-          update: {
-            ...preferences,
-            preferredCategories: preferences.preferredCategories || []
-          },
-          create: {
-            userId: req.user!.id,
-            ...preferences,
-            preferredCategories: preferences.preferredCategories || []
-          }
+        const existingPreference = await prisma.userPreference.findFirst({
+          where: { userId: req.user!.id }
         });
+        
+        if (existingPreference) {
+          await prisma.userPreference.update({
+            where: { id: existingPreference.id },
+            data: {
+              ...preferences,
+              preferredCategories: preferences.preferredCategories ? JSON.stringify(preferences.preferredCategories) : existingPreference.preferredCategories
+            }
+          });
+        } else {
+          await prisma.userPreference.create({
+            data: {
+              userId: req.user!.id,
+              ...preferences,
+              preferredCategories: preferences.preferredCategories ? JSON.stringify(preferences.preferredCategories) : '[]'
+            }
+          });
+        }
       }
 
       // Get updated preferences

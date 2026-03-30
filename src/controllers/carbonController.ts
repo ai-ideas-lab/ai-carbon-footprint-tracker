@@ -177,7 +177,7 @@ export class CarbonController {
         const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
         
-        const dayRecords = records.filter(record => 
+        const dayRecords = records.filter((record: any) => 
           record.date >= dayStart && record.date < dayEnd
         );
         

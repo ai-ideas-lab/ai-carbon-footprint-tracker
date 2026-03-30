@@ -1,4 +1,7 @@
 import { Request, Response } from 'express';
+declare module 'jsonwebtoken' {
+    function sign(payload: any, secretOrPrivateKey: string, options?: any): string;
+}
 import { AuthRequest } from '../middleware/auth';
 export declare class UserController {
     static register(req: Request, res: Response): Promise<void>;

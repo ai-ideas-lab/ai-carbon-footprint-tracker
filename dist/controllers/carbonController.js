@@ -152,7 +152,7 @@ class CarbonController {
                 const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
                 const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
                 const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-                const dayRecords = records.filter(record => record.date >= dayStart && record.date < dayEnd);
+                const dayRecords = records.filter((record) => record.date >= dayStart && record.date < dayEnd);
                 summary.trend.push({
                     date: dayStart.toISOString().split('T')[0],
                     emission: dayRecords.reduce((sum, record) => sum + record.carbonEmission, 0)

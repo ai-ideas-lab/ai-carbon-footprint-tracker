@@ -66,6 +66,7 @@ exports.carbonValidationSchemas = {
 exports.aiValidationSchemas = {
     analyzeRecord: joi_1.default.object({
         recordData: joi_1.default.object({
+            id: joi_1.default.string().required(),
             category: joi_1.default.string().required(),
             type: joi_1.default.string().required(),
             amount: joi_1.default.number().positive().required(),

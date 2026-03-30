@@ -42,7 +42,7 @@ class UserController {
             await database_1.prisma.userPreference.create({
                 data: {
                     userId: user.id,
-                    preferredCategories: [],
+                    preferredCategories: '[]', // JSON string for SQLite
                     notificationsEnabled: true,
                     language: 'zh-CN',
                     currency: 'CNY'
@@ -53,7 +53,7 @@ class UserController {
                 id: user.id,
                 email: user.email,
                 name: user.name
-            }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+            }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
             res.status(201).json({
                 success: true,
                 data: {
@@ -99,7 +99,7 @@ class UserController {
                 id: user.id,
                 email: user.email,
                 name: user.name
-            }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+            }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
             // Get user preferences
             const preferences = await database_1.prisma.userPreference.findFirst({
                 where: { userId: user.id }
@@ -191,18 +191,27 @@ class UserController {
             });
             // Update preferences if provided
             if (preferences) {
-                await database_1.prisma.userPreference.upsert({
-                    where: { userId: req.user.id },
-                    update: {
-                        ...preferences,
-                        preferredCategories: preferences.preferredCategories || []
-                    },
-                    create: {
-                        userId: req.user.id,
-                        ...preferences,
-                        preferredCategories: preferences.preferredCategories || []
-                    }
+                const existingPreference = await database_1.prisma.userPreference.findFirst({
+                    where: { userId: req.user.id }
                 });
+                if (existingPreference) {
+                    await database_1.prisma.userPreference.update({
+                        where: { id: existingPreference.id },
+                        data: {
+                            ...preferences,
+                            preferredCategories: preferences.preferredCategories ? JSON.stringify(preferences.preferredCategories) : existingPreference.preferredCategories
+                        }
+                    });
+                }
+                else {
+                    await database_1.prisma.userPreference.create({
+                        data: {
+                            userId: req.user.id,
+                            ...preferences,
+                            preferredCategories: preferences.preferredCategories ? JSON.stringify(preferences.preferredCategories) : '[]'
+                        }
+                    });
+                }
             }
             // Get updated preferences
             const updatedPreferences = await database_1.prisma.userPreference.findFirst({

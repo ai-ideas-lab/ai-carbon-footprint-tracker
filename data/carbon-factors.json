@@ -1,0 +1,149 @@
+{
+  "transportation": {
+    "car_gasoline": {
+      "factor": 2.31,
+      "description": "汽油车碳排放因子",
+      "source": "IPCC 2006 Guidelines"
+    },
+    "car_diesel": {
+      "factor": 2.68,
+      "description": "柴油车碳排放因子",
+      "source": "IPCC 2006 Guidelines"
+    },
+    "electric_car": {
+      "factor": 0.058,
+      "description": "电动车碳排放因子",
+      "source": "中国电力平均排放因子"
+    },
+    "bus": {
+      "factor": 0.089,
+      "description": "公交车碳排放因子",
+      "source": "中国交通运输数据"
+    },
+    "subway": {
+      "factor": 0.047,
+      "description": "地铁碳排放因子",
+      "source": "中国城市轨道交通数据"
+    },
+    "train": {
+      "factor": 0.041,
+      "description": "火车碳排放因子",
+      "source": "中国铁路数据"
+    },
+    "airplane": {
+      "factor": 0.255,
+      "description": "飞机碳排放因子",
+      "source": "ICAO emissions calculator"
+    }
+  },
+  "food": {
+    "beef": {
+      "factor": 27,
+      "description": "牛肉碳排放因子",
+      "source": "Poore & Nemecek (2018)"
+    },
+    "pork": {
+      "factor": 12.1,
+      "description": "猪肉碳排放因子",
+      "source": "Poore & Nemecek (2018)"
+    },
+    "chicken": {
+      "factor": 6.9,
+      "description": "鸡肉碳排放因子",
+      "source": "Poore & Nemecek (2018)"
+    },
+    "rice": {
+      "factor": 4,
+      "description": "米饭碳排放因子",
+      "source": "中国水稻研究所"
+    },
+    "vegetables": {
+      "factor": 0.4,
+      "description": "蔬菜碳排放因子",
+      "source": "FAO data"
+    },
+    "fruits": {
+      "factor": 1,
+      "description": "水果碳排放因子",
+      "source": "FAO data"
+    }
+  },
+  "energy": {
+    "electricity": {
+      "factor": 0.58,
+      "description": "中国电力平均排放因子",
+      "source": "国家能源局"
+    },
+    "natural_gas": {
+      "factor": 2.16,
+      "description": "天然气碳排放因子",
+      "source": "中国天然气数据"
+    },
+    "coal": {
+      "factor": 2.77,
+      "description": "煤炭碳排放因子",
+      "source": "中国煤炭数据"
+    },
+    "heating": {
+      "factor": 0.034,
+      "description": "供暖碳排放因子",
+      "source": "中国供热数据"
+    }
+  },
+  "shopping": {
+    "clothes": {
+      "factor": 27,
+      "description": "服装碳排放因子",
+      "source": "时尚产业环保报告"
+    },
+    "electronics": {
+      "factor": 370,
+      "description": "电子产品碳排放因子",
+      "source": "电子产品生命周期评估"
+    },
+    "furniture": {
+      "factor": 50,
+      "description": "家具碳排放因子",
+      "source": "家具行业数据"
+    },
+    "books": {
+      "factor": 3,
+      "description": "书籍碳排放因子",
+      "source": "出版业数据"
+    }
+  },
+  "housing": {
+    "water": {
+      "factor": 0.346,
+      "description": "自来水处理碳排放因子",
+      "source": "水务行业数据"
+    },
+    "waste": {
+      "factor": 0.5,
+      "description": "垃圾处理碳排放因子",
+      "source": "环保行业数据"
+    },
+    "construction": {
+      "factor": 480,
+      "description": "建筑建造碳排放因子",
+      "source": "建筑业数据"
+    }
+  },
+  "waste": {
+    "landfill": {
+      "factor": 0.5,
+      "description": "填埋处理碳排放因子",
+      "source": "环保行业数据"
+    },
+    "recycling": {
+      "factor": -0.3,
+      "description": "回收处理碳排放因子",
+      "source": "循环经济数据"
+    },
+    "composting": {
+      "factor": 0.1,
+      "description": "堆肥处理碳排放因子",
+      "source": "有机处理数据"
+    }
+  }
+}

@@ -35,8 +35,7 @@ export async function initDatabase() {
         data: {
           email: 'admin@carbontracker.com',
           password: 'hashed_password_placeholder',
-          name: '系统管理员',
-          emailVerified: true
+          name: '系统管理员'
         }
       });
       console.log('✅ Admin user created');

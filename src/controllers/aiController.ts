@@ -21,7 +21,6 @@ export class AIController {
     try {
       const { recordData, context } = req.body;
 
-      // Validate input
       const { error } = aiValidationSchemas.analyzeRecord.validate(req.body);
       if (error) {
         return res.status(400).json({
@@ -36,8 +35,7 @@ export class AIController {
         });
       }
 
-      const analysisPrompt = `
-你是一个碳足迹分析专家。请基于以下碳足迹记录，提供详细的分析和建议：
+      const analysisPrompt = `你是一个碳足迹分析专家。请基于以下碳足迹记录，提供详细的分析和建议：
 
 **记录信息：**
 - 类别：${recordData.category}
@@ -63,8 +61,7 @@ export class AIController {
   "knowledge": ["知识1", "知识2"],
   "alternatives": ["替代方案1", "替代方案2", "替代方案3"],
   "longTermStrategies": ["策略1", "策略2"]
-}
-      `;
+}`;
 
       const completion = await this.openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'gpt-4',
@@ -87,10 +84,9 @@ export class AIController {
       try {
         const analysisResult = JSON.parse(aiResponse);
         
-        // Update the record with AI analysis
         await prisma.carbonRecord.update({
           where: {
-            id: recordData.id // Assuming recordData contains id
+            id: recordData.id!
           },
           data: {
             analyzed: true,
@@ -108,10 +104,9 @@ export class AIController {
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
         
-        // Store raw response if parsing fails
         await prisma.carbonRecord.update({
           where: {
-            id: recordData.id
+            id: recordData.id!
           },
           data: {
             analyzed: true,
@@ -149,7 +144,6 @@ export class AIController {
     try {
       const userId = req.user!.id;
       
-      // Get user's carbon records for the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -164,22 +158,20 @@ export class AIController {
         throw createError('No carbon data available to generate plan', 400);
       }
 
-      // Calculate summary statistics
       const totalEmission = records.reduce((sum: number, record: any) => sum + record.carbonEmission, 0);
       const byCategory = records.reduce((acc: Record<string, number>, record: any) => {
         acc[record.category] = (acc[record.category] || 0) + record.carbonEmission;
         return acc;
       }, {} as Record<string, number>);
 
-      const prompt = `
-你是一个碳减排计划专家。基于以下用户的碳排放数据，生成个性化的30天碳减排计划：
+      const prompt = `你是一个碳减排计划专家。基于以下用户的碳排放数据，生成个性化的30天碳减排计划：
 
 **用户数据（过去30天）：**
 - 总碳排放：${totalEmission.toFixed(2)} kg CO2e
 - 记录数量：${records.length} 条
 - 各类别分布：
 ${Object.entries(byCategory).map(([category, emission]) => 
-  `- ${category}: ${(emission as number).toFixed(2)} kg CO2e (${((emission as number) / totalEmission) * 100).toFixed(1)}%)`
+  `- ${category}: ${(emission as number).toFixed(2)} kg CO2e (${((emission as number) / totalEmission * 100).toFixed(1)}%)`
 ).join('\n')}
 
 **要求：**
@@ -209,8 +201,7 @@ ${Object.entries(byCategory).map(([category, emission]) =>
   "dailyHabits": ["习惯1", "习惯2"],
   "trackingMethods": ["追踪方法1", "追踪方法2"],
   "motivation": "激励策略"
-}
-      `;
+}`;
 
       const completion = await this.openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'gpt-4',
@@ -233,19 +224,30 @@ ${Object.entries(byCategory).map(([category, emission]) =>
       try {
         const reductionPlan = JSON.parse(aiResponse);
         
-        // Save the plan to user preferences or create a new achievement
-        await prisma.userPreference.upsert({
-          where: { userId },
-          update: {
-            reductionPlan: JSON.stringify(reductionPlan, null, 2)
-          },
-          create: {
-            userId,
-            reductionPlan: JSON.stringify(reductionPlan, null, 2)
-          }
+        // Get existing user preference or create default
+        const userPreference = await prisma.userPreference.findFirst({
+          where: { userId }
         });
+        
+        if (userPreference) {
+          await prisma.userPreference.update({
+            where: { id: userPreference.id },
+            data: {
+              preferredCategories: JSON.stringify(reductionPlan?.preferredCategories || [])
+            }
+          });
+        } else {
+          await prisma.userPreference.create({
+            data: {
+              userId,
+              preferredCategories: JSON.stringify(reductionPlan?.preferredCategories || []),
+              notificationsEnabled: true,
+              language: 'zh-CN',
+              currency: 'CNY'
+            }
+          });
+        }
 
-        // Create achievement
         await prisma.achievement.create({
           data: {
             userId,
@@ -303,8 +305,7 @@ ${Object.entries(byCategory).map(([category, emission]) =>
         });
       }
 
-      const chatPrompt = `
-你是一个环保生活顾问，专门帮助用户解答关于碳排放和环保生活的问题。用户的提问是：
+      const chatPrompt = `你是一个环保生活顾问，专门帮助用户解答关于碳排放和环保生活的问题。用户的提问是：
 
 "${message}"
 
@@ -314,8 +315,7 @@ ${Object.entries(byCategory).map(([category, emission]) =>
 3. 实用的生活技巧
 4. 鼓励和支持的语气
 
-请用中文回答，保持专业但友好的语调。
-      `;
+请用中文回答，保持专业但友好的语调。`;
 
       const completion = await this.openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'gpt-4',
@@ -335,7 +335,6 @@ ${Object.entries(byCategory).map(([category, emission]) =>
 
       const response = completion.choices[0].message.content;
 
-      // Save chat interaction for future reference
       await prisma.carbonRecord.create({
         data: {
           userId: req.user!.id,
@@ -344,7 +343,7 @@ ${Object.entries(byCategory).map(([category, emission]) =>
           amount: 0,
           unit: 'conversation',
           source: 'ai_chat',
-          description: `AI咨询: ${message}`,
+          description: 'AI咨询: ' + message,
           carbonEmission: 0
         }
       });
@@ -371,7 +370,6 @@ ${Object.entries(byCategory).map(([category, emission]) =>
       const userId = req.user!.id;
       const { period = 'month' } = req.query;
 
-      // Calculate date range based on period
       let startDate: Date;
       const now = new Date();
       
@@ -408,12 +406,10 @@ ${Object.entries(byCategory).map(([category, emission]) =>
         });
       }
 
-      // Generate insights using AI
       const totalEmission = records.reduce((sum: number, record: any) => sum + record.carbonEmission, 0);
       const avgDailyEmission = totalEmission / records.length;
       
-      const insightsPrompt = `
-基于用户的碳足迹数据，生成智能洞察：
+      const insightsPrompt = `基于用户的碳足迹数据，生成智能洞察：
 
 **数据概览：**
 - 总排放量：${totalEmission.toFixed(2)} kg CO2e
@@ -421,10 +417,12 @@ ${Object.entries(byCategory).map(([category, emission]) =>
 - 平均每日排放：${avgDailyEmission.toFixed(2)} kg CO2e
 
 **按类别分布：**
-${records.reduce((acc: Record<string, number>, record: any) => {
-  acc[record.category] = (acc[record.category] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>)});
+${Object.entries(records.reduce((acc: Record<string, number>, record: any) => {
+        acc[record.category] = (acc[record.category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)).map(([category, count]) => 
+        `- ${category}: ${count} 条记录`
+      ).join('\n')}
 
 请提供：
 1. 3-4个关键洞察
@@ -436,8 +434,7 @@ ${records.reduce((acc: Record<string, number>, record: any) => {
   "insights": ["洞察1", "洞察2", "洞察3"],
   "recommendations": ["建议1", "建议2"],
   "trends": ["趋势1", "趋势2"]
-}
-      `;
+}`;
 
       const completion = await this.openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'gpt-4',

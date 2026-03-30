@@ -21,6 +21,7 @@ model User {
   achievements Achievement[]
   socialGroups SocialGroup[]
   userPreferences UserPreference[]
+  userChallenges UserChallenge[]
   
   @@map("users")
 }
@@ -28,8 +29,8 @@ model User {
 model CarbonRecord {
   id          String   @id @default(cuid())
   userId      String
-  category    CarbonCategory
-  type        CarbonType
+  category    String
+  type        String
   amount      Float
   unit        String
   source      String?
@@ -111,7 +112,7 @@ model UserChallenge {
 model UserPreference {
   id                   String   @id @default(cuid())
   userId               String
-  preferredCategories  String[] // JSON array of preferred carbon categories
+  preferredCategories  String   // JSON string of preferred carbon categories
   notificationsEnabled Boolean  @default(true)
   dailyGoal            Float?   // daily carbon reduction goal
   language             String   @default("zh-CN")
@@ -123,18 +124,8 @@ model UserPreference {
   @@map("user_preferences")
 }
 
-enum CarbonCategory {
-  TRANSPORTATION
-  FOOD
-  ENERGY
-  SHOPPING
-  HOUSING
-  WASTE
-  OTHER
-}
+// Carbon categories as string constants (to be validated in application)
+// Valid values: TRANSPORTATION, FOOD, ENERGY, SHOPPING, HOUSING, WASTE, OTHER
 
-enum CarbonType {
-  DIRECT
-  INDIRECT
-  OFFSET
-}
+// Carbon types as string constants (to be validated in application)  
+// Valid values: DIRECT, INDIRECT, OFFSET

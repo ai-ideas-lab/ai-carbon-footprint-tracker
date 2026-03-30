@@ -46,7 +46,7 @@ export class SocialController {
       const groups = await prisma.socialGroup.findMany({
         where: {
           OR: [
-            { isPublic: false },
+            { isPrivate: false },
             {
               members: {
                 some: {
@@ -220,7 +220,7 @@ export class SocialController {
 
       if (groupMembers?.members) {
         await prisma.userChallenge.createMany({
-          data: groupMembers.members.map(member => ({
+          data: groupMembers.members.map((member: any) => ({
             userId: member.id,
             challengeId: challenge.id,
             progress: 0
@@ -279,7 +279,7 @@ export class SocialController {
             }
           }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { startDate: 'desc' }
       });
 
       res.json({
@@ -323,12 +323,17 @@ export class SocialController {
 
       // Check if challenge is completed
       if (progress >= 100) {
+        // Get challenge details
+        const challenge = await prisma.groupChallenge.findUnique({
+          where: { id: userChallenge.challengeId }
+        });
+        
         // Create achievement
         await prisma.achievement.create({
           data: {
             userId: req.user!.id,
             title: '挑战完成',
-            description: `完成了碳减排挑战: ${userChallenge.challenge.title}`,
+            description: `完成了碳减排挑战: ${challenge?.title || '未知挑战'}`,
             icon: '🏆',
             points: 100
           }
@@ -390,11 +395,11 @@ export class SocialController {
       }
 
       const leaderboard = await Promise.all(
-        groupMembers.members.map(async (member) => {
+        groupMembers.members.map(async (member: any) => {
           const achievements = await prisma.achievement.findMany({
             where: {
               userId: member.id,
-              createdAt: { gte: startDate }
+              unlockedAt: { gte: startDate }
             }
           });
 
@@ -405,7 +410,7 @@ export class SocialController {
             }
           });
 
-          const totalReduction = carbonRecords.reduce((sum, record) => {
+          const totalReduction = carbonRecords.reduce((sum: number, record: any) => {
             if (record.type === 'OFFSET') {
               return sum + record.carbonEmission;
             } else if (record.category === 'ENERGY' || record.category === 'TRANSPORTATION') {
@@ -414,7 +419,7 @@ export class SocialController {
             return sum;
           }, 0);
 
-          const totalPoints = achievements.reduce((sum, achievement) => sum + achievement.points, 0);
+          const totalPoints = achievements.reduce((sum: number, achievement: any) => sum + achievement.points, 0);
 
           return {
             user: {
@@ -478,7 +483,7 @@ export class SocialController {
         }),
         prisma.achievement.count({
           where: {
-            createdAt: {
+            unlockedAt: {
               gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
             }
           }
@@ -518,8 +523,8 @@ export class SocialController {
       }
     });
 
-    const totalEmission = records.reduce((sum, record) => sum + record.carbonEmission, 0);
-    const reductions = records.filter(record => 
+    const totalEmission = records.reduce((sum: number, record: any) => sum + record.carbonEmission, 0);
+    const reductions = records.filter((record: any) => 
       record.type === 'OFFSET' || 
       (record.category === 'ENERGY' || record.category === 'TRANSPORTATION')
     ).length;
